@@ -4,7 +4,7 @@
 		module="practice$sources"
 		revision="0.1"
 		status="integration"
-		publication="20190723113608"
+		publication="20190723172240"
 	/>
 	<configurations>
 		<conf name="compile" visibility="public" description=""/>
