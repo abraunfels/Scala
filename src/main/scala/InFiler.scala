@@ -8,15 +8,6 @@ trait InFiler {
 
     private[this] var alreadyReadenBytes = 0
 
-    private def getNumberOfChunks: Int = {
-      val randomAccessFile = new RandomAccessFile(fileName, "r")
-      try {
-        (randomAccessFile.length / defaultBlockSize).toInt
-      } finally {
-        randomAccessFile.close
-      }
-    }
-
     def checkFinish: Boolean = {
       var flagFinish : Boolean = false
       val randomAccessFile = new RandomAccessFile(fileName, "r")
@@ -36,10 +27,11 @@ trait InFiler {
         val byteBuffer = Array.ofDim[Byte](defaultBlockSize)
         randomAccessFile.seek(alreadyReadenBytes)
         val len = randomAccessFile.read(byteBuffer)
-        alreadyReadenBytes += len
         val rawString = new String(byteBuffer, 0, len)
-        val Lines = rawString.split(Properties.lineSeparator)
-        if (rawString.last != '\n') alreadyReadenBytes -= Lines.last.length
+        val Lines =
+          if (rawString.last != '\n')  rawString.split(Properties.lineSeparator).init
+          else rawString.split(Properties.lineSeparator)
+        alreadyReadenBytes += len - (if (rawString.last != '\n') rawString.split(Properties.lineSeparator).last.length else 0)//Идиотиизм, но по-другому не придумала
         Lines
       } finally {
         randomAccessFile.close
