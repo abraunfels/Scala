@@ -1,7 +1,7 @@
 import java.io.File
 
 import akka.Done
-import akka.actor.{ActorSystem, CoordinatedShutdown}
+import akka.actor.{Actor, ActorSystem, CoordinatedShutdown}
 import akka.stream.ActorMaterializer
 import akka.event.Logging
 import akka.http.scaladsl.Http
@@ -15,34 +15,54 @@ import akka.util.ByteString
 
 import scala.concurrent.{Await, Future}
 import scala.concurrent.duration.DurationDouble
+import akka.http.scaladsl.server.Directives
 
-object MainServer {
+//дерьмицо для JSON
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
+import spray.json._
+
+import akka.actor.Actor._
+
+class Msg
+// domain model
+final case class MsgOK(status: String, val id: String)
+final case class MsgERR(status: String, val error: String)
+
+// collect your json format instances into a support trait:
+trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
+  implicit val msgOKFormat = jsonFormat2(MsgOK)
+  implicit val msgERRFormat = jsonFormat2(MsgERR)
+}
+
+object MainServer extends Directives with JsonSupport{
   implicit val system = ActorSystem()
   implicit val materializer = ActorMaterializer()
   // needed for the future foreach in the end
   implicit val executionContext = system.dispatcher
 
-  def tempDestination(fileInfo: FileInfo): File =
-    File.createTempFile(fileInfo.fileName, ".tmp", new File("D:/Files"))
-  //{
-  //  val f = new File(fileInfo.fileName)
-  //  f.createNewFile()
-  //  f
-  //}
+  val sac = new ServerComputActor
+
+  def tempDestination(fileInfo: FileInfo): File = //либо темповый либо неть
+    File.createTempFile(fileInfo.fileName, "", new File("D:/Files")) //по-хорошему это надо как-то поменять
 
   val route =
     path("uploadStats") {
-      storeUploadedFiles("csv/stats", tempDestination) { files =>
-        val finalStatus = files.foldLeft(StatusCodes.OK) {
-          case (status, (metadata, file)) =>
+      val mongoGridFs = new MongoGridFS("StatsDB")
+      storeUploadedFile("csv/stats", tempDestination) {
+        case (metadata, file) =>
+          val res = mongoGridFs.saver(file)
+            .map(objId =>
+            {
+              //sac.receive(new Processor(file.getAbsolutePath))
+              MsgOK("ok", objId.toString)
 
-            //тут обработка файла для монго
-            //file.delete()
-            status
-        }
-        complete(finalStatus)
-
-        //val done: Future[Done] = CoordinatedShutdown(system).run(CoordinatedShutdown.UnknownReason)
+            })
+            //.recover{ //с этой фигней не работает
+           // case except: Exception =>
+           //     MsgERR("error", except.toString)
+          //}
+          file.delete()
+          complete(res.toFuture())
       }
     }
 
@@ -55,3 +75,5 @@ object MainServer {
    log.error(ex, "Failed to bind to {}:{}!", host, port)
   }
 }
+
+

@@ -40,17 +40,7 @@ class PayStats (val operator: String, var sum: Float, date: String){ //это г
     resList
   }
 
-  def display: Unit ={
-    println ("Operator " + operator)
-    println ("Sum of payments: " + sum)
-    println ("Quantity of paymetns: " + quantity)
-    print ("Top-5 payments")
-    for (el <- maxPays)
-      print(" " + el)
-    printf("\n")
-    println("Daily average")
-    for ((k, v) <- daily)
-      print (k+ " " + v)
-    printf("\n")
-  }
+  def getResult: (String, Float, Int, Array[Float], Array[(String, Float)]) =
+    (operator, sum, quantity, maxPays.toArray, daily.map(x => (x._1, x._2._1/x._2._1)).toArray)
 }
+
