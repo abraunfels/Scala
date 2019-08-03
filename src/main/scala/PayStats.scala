@@ -11,7 +11,6 @@ class PayStats (val operator: String, var sum: Float, date: String){ //это г
   val quantityMaxPays = 5
   var maxPays: List[Float] = List()
   maxPays.::(sum)
-  //конец главного конструктора
 
   def addPayt (amount: Float, date: String): PayStats = {
     sum += amount
@@ -46,8 +45,9 @@ class PayStats (val operator: String, var sum: Float, date: String){ //это г
     (operator, sum, quantity, maxPays, daily.map(x => (x._1, x._2._1/x._2._1)).toList)
 }
 
-final case class FileData(_id : ObjectId, data: List[OperatorItem])
-final case class OperatorItem(operator: String, sum: Float, quantity: Int, max: List[Float], daily: List[Daily])
-final case class Daily(date: String, average: Float)
+//Classes for serialization
+final case class FileData(val _id : ObjectId,val data: List[OperatorItem])
+final case class OperatorItem(val operator: String,val sum: Float, val quantity: Int, val max: List[Float],val daily: List[Daily])
+final case class Daily(val date: String, val average: Float)
 
 

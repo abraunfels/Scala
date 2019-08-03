@@ -1,3 +1,5 @@
+//This part is from mongodb-scala-driver examples
+
 package tour
 
 import java.util.concurrent.TimeUnit
@@ -12,7 +14,6 @@ object Helpers {
   implicit class DocumentObservable[C](val observable: Observable[Document]) extends ImplicitObservable[Document] {
     override val converter: (Document) => String = (doc) => doc.toJson
   }
-  //}
 
   implicit class GenericObservable[C](val observable: Observable[C]) extends ImplicitObservable[C] {
     override val converter: (C) => String = (doc) => doc.toString

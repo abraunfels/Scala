@@ -1,7 +1,4 @@
-import java.io.File
-
 import scala.collection._
-import scala.util.matching.Regex
 
 class Processor (sourceFile: String) extends {val fileName = sourceFile} with InFiler{
 

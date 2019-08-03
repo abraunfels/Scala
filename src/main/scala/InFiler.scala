@@ -1,6 +1,5 @@
 import java.io.RandomAccessFile
 import util.Properties
-import scala.collection._
 
 trait InFiler {
     val fileName: String
