@@ -48,8 +48,12 @@ object MainServer extends Directives with JsonSupport{
   val sCA = system.actorOf(Props[ServerComputActor], name = "serverComputingActor")
 
   def tempDestination(fileInfo: FileInfo): File =
-    File.createTempFile(fileInfo.fileName, "", new File("D:/Files/SCALA/Scala-taskOne"))
-  //As i think, The value of destination path need to be initialized in another place
+  {
+    val f = new File(fileInfo.fileName)
+    f.createNewFile()
+    f
+  }
+
 
   val route = concat(
     path("uploadStats") {
@@ -59,13 +63,12 @@ object MainServer extends Directives with JsonSupport{
             .map(objId => {
               sCA ! (FileID(file, objId))
               MsgOK("ok", objId.toString)
-            })
+            }).toFuture
           //.recover{ //Not worked with this part
           // case except: Exception =>
           //     MsgERR("error", except.toString)
           //}
-          file.deleteOnExit() //This file is not deleted, while app is working. Why?
-          complete(res.toFuture())
+          complete(res)
       }
     },
     path("getStat") {

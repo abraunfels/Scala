@@ -12,6 +12,7 @@ class ServerComputActor() extends Actor {
   override def receive: Receive = {
     case FileID(file, objID) =>
       MongoProcessor.saverCollect(objID, new Processor(file.getAbsolutePath).getJSONResult)
+      file.delete()
   }
 }
 

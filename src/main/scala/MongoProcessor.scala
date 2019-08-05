@@ -17,7 +17,7 @@ object MongoProcessor{
   private val _baseName = "StatsDB"
   private val _collectionName = "StatisticsFiles"
   val mongoClient: MongoClient = MongoClient(_host)
-  //Collection & database names is initialized once.
+
   val database: MongoDatabase = mongoClient.getDatabase(_baseName).withCodecRegistry(
     fromRegistries(fromProviders(classOf[FileData], classOf[OperatorItem], classOf[Daily]), DEFAULT_CODEC_REGISTRY )
   )
@@ -33,12 +33,12 @@ object MongoProcessor{
     val fileName:String = (".*.csv".r findFirstIn file.getName).get
     val trackMe = customFSBucket.uploadFromStream(fileName, streamToUploadFrom)
 
-    //streamToUploadFrom.close() Have I to close this stream?
+    trackMe.map (x => streamToUploadFrom.close())
+
     trackMe
   }
 
   def saverCollect(objId: ObjectId, lstOp : List[OperatorItem]) =
-    //Is this part needed to work async?
     collection.insertOne(FileData(objId, lstOp)).results()
 
   def getCollectFile(id: String): FindObservable[FileData] =
