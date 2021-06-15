@@ -1,15 +1,22 @@
 import scala.collection._
-import scala.util.matching.Regex
 
 class Processor (sourceFile: String) extends {val fileName = sourceFile} with InFiler{
-  def processFile: mutable.HashMap [String, PayStats] = {
-    var resStat = new mutable.HashMap [String, PayStats]
+
+  def getJSONResult: List[OperatorItem] ={
+    val resMap = this.processFile
+    resMap.map(x => {
+      val (op: String, sum: Float, q: Int, max: List[Float], daily: List[(String, Float)]) = x._2.getResult
+      OperatorItem(op, sum, q, max, daily.map(y => Daily(y._1, y._2)))
+    }).toList
+  }
+
+  private def processFile: mutable.HashMap [String, PayStats] = {
+    val resStat = new mutable.HashMap [String, PayStats]
     val startTime = System.currentTimeMillis
-    var offset: Int = 0
-    var j: Int = 0
     while (!checkFinish){
-      var tmp = Array[String]()
-      tmp = readLines()
+      val tmp =
+        if (resStat.isEmpty) readLines().tail
+        else readLines()
       processLines (tmp, resStat)
     }
     val endTime = System.currentTimeMillis
@@ -17,18 +24,10 @@ class Processor (sourceFile: String) extends {val fileName = sourceFile} with In
     resStat
   }
 
-  def processLines (sourceArray : Array[String], statMap : mutable.HashMap [String, PayStats]){
-    for (elSrcArr <- sourceArray){
-      val resStrArr = elSrcArr.split(";")
-      val pattern = new Regex("\\.[0-9][0-9]")
-      if ((resStrArr.size == 4) && (pattern.findFirstIn(resStrArr(3)).nonEmpty)) {
-        if (statMap.contains(resStrArr(2))) {
-          statMap(resStrArr(2)).addPayt(resStrArr(3).toFloat, resStrArr(1))
-        }
-        else {
-          statMap(resStrArr(2)) = new PayStats(resStrArr(2), resStrArr(3).toFloat, resStrArr(1))
-        }
-      }
-    }
+  private def processLines (sourceArray : Array[String], statMap : mutable.HashMap [String, PayStats]){
+    sourceArray.foreach(x =>
+        { val Array(id, date, operator, amount)= x.split(";");
+          statMap(operator) = statMap.get(operator).map( x => statMap(operator).addPayt(amount.toFloat, date)).getOrElse(new PayStats(operator, amount.toFloat, date))
+        })
   }
 }
